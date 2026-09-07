@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About Element Shot</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    font: 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; color: #1f1f1f;
+    background: #f3ece2;
+    background-image:
+      radial-gradient(60% 60% at 15% 20%, #f7c9a8cc, transparent 70%),
+      radial-gradient(50% 50% at 85% 15%, #c9c6ecbb, transparent 70%),
+      radial-gradient(55% 55% at 80% 85%, #b9dcefbb, transparent 70%),
+      radial-gradient(45% 45% at 20% 90%, #f6e3a1cc, transparent 70%);
+  }
+  main {
+    width: min(520px, calc(100% - 40px)); padding: 36px 40px; background: #fff; border-radius: 16px;
+    box-shadow: 0 24px 60px -20px rgba(40,30,20,.35);
+  }
+  header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+  header img { width: 56px; height: 56px; border-radius: 14px; }
+  h1 { font-size: 22px; margin: 0; }
+  .version { color: #666; font-size: 13px; }
+  h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: #888; margin: 26px 0 8px; }
+  p { margin: 0 0 10px; }
+  ol { margin: 0; padding-left: 20px; }
+  li { margin-bottom: 4px; }
+  kbd { font: 12px ui-monospace, Menlo, monospace; padding: 1px 6px; border: 1px solid #ccc; border-bottom-width: 2px; border-radius: 4px; background: #f7f7f7; }
+  a { color: #4f46e5; }
+  footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #eee; font-size: 13px; color: #666; }
+  @media (prefers-color-scheme: dark) {
+    body { color: #ececec; background: #1c1a18; background-image:
+      radial-gradient(60% 60% at 15% 20%, #7a4b3055, transparent 70%),
+      radial-gradient(50% 50% at 85% 15%, #4a4670aa, transparent 70%),
+      radial-gradient(55% 55% at 80% 85%, #2f4a5aaa, transparent 70%),
+      radial-gradient(45% 45% at 20% 90%, #6a5a2a66, transparent 70%); }
+    main { background: #26231f; box-shadow: 0 24px 60px -20px rgba(0,0,0,.6); }
+    .version, h2, footer { color: #9a948c; }
+    footer { border-color: #3a3630; }
+    kbd { background: #1c1a18; border-color: #4a463f; color: #ddd; }
+    a { color: #a5b4fc; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="icons/icon128.png" alt="">
+    <div>
+      <h1>Element Shot</h1>
+      <div class="version">Version <span id="version">…</span> · free and open</div>
+    </div>
+  </header>
+
+  <p>Screenshot exactly one element of a web page, dropped onto a soft pastel background with a drop shadow. No accounts, no tracking, no network.</p>
+
+  <h2>How to use</h2>
+  <ol>
+    <li>Click the Element Shot icon in the toolbar.</li>
+    <li>Move the mouse; the element under the cursor is outlined.</li>
+    <li>Click it. Press <kbd>Esc</kbd> to cancel.</li>
+    <li>The PNG lands in your Downloads folder.</li>
+  </ol>
+  <p style="margin-top:10px">Rounded cards keep their corners, and a transparent container such as a row of cards is cut into its visible parts so the background shows through the gaps.</p>
+
+  <h2>Privacy</h2>
+  <p>Element Shot only touches a page when you click its icon. The captured image is composed on your computer and saved to your Downloads folder. Nothing is uploaded, stored, or collected. <a id="privacy" href="https://theill.com/element-shot/privacy" target="_blank" rel="noopener">Privacy policy</a></p>
+
+  <h2>Made by</h2>
+  <p><a href="https://theill.com" target="_blank" rel="noopener">Peter Theill</a> · <a href="mailto:peter@theill.com">peter@theill.com</a></p>
+  <p>Found a bug or have an idea? Send an email. Element Shot is completely free and released under the MIT license.</p>
+
+  <footer>© <span id="year"></span> Peter Theill</footer>
+</main>
+<script src="about.js"></script>
+</body>
+</html>
