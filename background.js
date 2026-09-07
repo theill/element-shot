@@ -1,17 +1,17 @@
-// Element Shot background worker: starts the picker, grabs the tab, composes, downloads.
+// Element Shot background worker: starts the picker, captures tiles, stitches and composes, downloads.
 
 const PADDING = 72;
 // Background: cream base with large soft colour blobs and a light film grain.
 const MESH_BASE = "#f3ece2";
 const MESH_BLOBS = ["#f7c9a8", "#f2b7c6", "#c9c6ec", "#b9dcef", "#f6e3a1"];
+const DEFAULT_TITLE = "Element Shot: pick an element to screenshot";
 
 // Show the About page once, right after installation.
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") chrome.runtime.openOptionsPage();
 });
 
-const DEFAULT_TITLE = "Element Shot: pick an element to screenshot";
-
+// Toolbar click or the keyboard shortcut (the _execute_action command lands here).
 chrome.action.onClicked.addListener(async (tab) => {
   if (!tab.id) return;
   const url = tab.url || "";
@@ -42,33 +42,82 @@ async function flash(tabId, message) {
   } catch {}
 }
 
+// ---------- capture sessions ----------
+// A capture is a short conversation with the content script: begin, one or more tiles (each a crop
+// of the visible tab placed at an offset inside the element), then finish, which composes and saves.
+
+const sessions = new Map(); // tabId -> { viewport, dpr, tiles: [{ bitmap, dx, dy, w, h }] }
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg?.type !== "element-shot:shoot") return;
-  shoot(msg, sender)
+  const handler = { "element-shot:begin": begin, "element-shot:tile": tile, "element-shot:finish": finish }[msg?.type];
+  if (!handler) return;
+  handler(msg, sender)
     .then((result) => sendResponse({ ok: true, ...result }))
     .catch((err) => sendResponse({ ok: false, error: err?.message || String(err) }));
   return true; // async response
 });
 
-async function shoot({ rect, boxes, viewport, transparent }, sender) {
-  const dataUrl = await chrome.tabs.captureVisibleTab(sender.tab.windowId, { format: "png" });
-  const capture = await createImageBitmap(await (await fetch(dataUrl)).blob());
-  const dpr = capture.width / viewport.width; // actual capture scale relative to CSS pixels
+async function begin({ viewport }, sender) {
+  discard(sender.tab.id);
+  sessions.set(sender.tab.id, { viewport, dpr: 1, tiles: [] });
+  return {};
+}
 
-  const shapes = boxes?.length ? boxes : [{ x: 0, y: 0, w: rect.width, h: rect.height, radii: [0, 0, 0, 0], solid: true }];
-  const png = await compose(capture, rect, shapes, dpr, { transparent: !!transparent });
-  const filename = `element-${stamp()}.png`;
-  await chrome.downloads.download({ url: png, filename, saveAs: false });
-  // The content script also puts the PNG on the clipboard; it needs the bytes for that.
-  return { filename, png };
+async function tile({ sx, sy, sw, sh, dx, dy }, sender) {
+  const s = sessions.get(sender.tab.id);
+  if (!s) throw new Error("no capture in progress");
+  const full = await createImageBitmap(await (await fetch(await captureTab(sender.tab.windowId))).blob());
+  const dpr = full.width / s.viewport.width; // actual capture scale relative to CSS pixels
+  s.dpr = dpr;
+  const x = Math.max(0, Math.round(sx * dpr)), y = Math.max(0, Math.round(sy * dpr));
+  const w = Math.min(full.width - x, Math.round(sw * dpr)), h = Math.min(full.height - y, Math.round(sh * dpr));
+  if (w < 1 || h < 1) { full.close(); throw new Error("nothing to capture"); }
+  const bitmap = await createImageBitmap(full, x, y, w, h);
+  full.close();
+  s.tiles.push({ bitmap, dx, dy, w: sw, h: sh });
+  return {};
+}
+
+async function finish({ size, boxes, transparent }, sender) {
+  const s = sessions.get(sender.tab.id);
+  if (!s?.tiles.length) throw new Error("nothing was captured");
+  sessions.delete(sender.tab.id);
+  try {
+    const shapes = boxes?.length ? boxes : [{ x: 0, y: 0, w: size.w, h: size.h, radii: [0, 0, 0, 0], solid: true }];
+    const png = await compose(s.tiles, s.dpr, size, shapes, { transparent: !!transparent });
+    const filename = `element-${siteName(sender.tab.url)}-${stamp()}.png`;
+    await chrome.downloads.download({ url: png, filename, saveAs: false });
+    // The content script also puts the PNG on the clipboard; it needs the bytes for that.
+    return { filename, png };
+  } finally {
+    for (const t of s.tiles) t.bitmap.close();
+  }
+}
+
+function discard(tabId) {
+  const s = sessions.get(tabId);
+  if (s) for (const t of s.tiles) t.bitmap.close();
+  sessions.delete(tabId);
+}
+
+// Chrome caps captureVisibleTab at about two calls per second; wait and retry when we hit that.
+async function captureTab(windowId) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await chrome.tabs.captureVisibleTab(windowId, { format: "png" });
+    } catch (err) {
+      if (attempt >= 4 || !/quota/i.test(err?.message || "")) throw err;
+      await new Promise((r) => setTimeout(r, 600));
+    }
+  }
 }
 
 // ---------- compositing ----------
 
 // transparent: no padding, no background, no shadow; just the element's shape on alpha.
-async function compose(capture, rect, boxes, dpr, { transparent }) {
+async function compose(tiles, dpr, size, boxes, { transparent }) {
   const pad = transparent ? 0 : PADDING;
-  const w = rect.width, h = rect.height;
+  const w = size.w, h = size.h;
   const W = w + pad * 2, H = h + pad * 2;
   const canvas = new OffscreenCanvas(Math.round(W * dpr), Math.round(H * dpr));
   const ctx = canvas.getContext("2d");
@@ -101,7 +150,7 @@ async function compose(capture, rect, boxes, dpr, { transparent }) {
   ctx.save();
   shape();
   ctx.clip();
-  ctx.drawImage(capture, rect.x * dpr, rect.y * dpr, w * dpr, h * dpr, pad, pad, w, h);
+  for (const t of tiles) ctx.drawImage(t.bitmap, pad + t.dx, pad + t.dy, t.w, t.h);
   ctx.restore();
 
   const blob = await canvas.convertToBlob({ type: "image/png" });
@@ -167,6 +216,18 @@ function toBase64(buffer) {
     s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
   }
   return btoa(s);
+}
+
+// "www.example.com" -> "example.com"; local files -> "local"; anything odd -> "page".
+function siteName(url) {
+  try {
+    const u = new URL(url || "");
+    if (u.protocol === "file:") return "local";
+    const host = u.hostname.replace(/^www\./, "").replace(/[^a-z0-9.-]/gi, "-");
+    return host || "page";
+  } catch {
+    return "page";
+  }
 }
 
 function stamp() {

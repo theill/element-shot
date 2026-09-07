@@ -15,10 +15,10 @@ Chrome Web Store: coming soon. Until then, load it unpacked:
 
 ## Use
 
-1. Click the Element Shot icon on any http(s) page.
-2. Move the mouse; the element under the cursor is outlined with its tag, id, classes, and size.
+1. Click the Element Shot icon on any http(s) page, or press **Alt+Shift+S** (configurable at `chrome://extensions/shortcuts`).
+2. Move the mouse; the element under the cursor is outlined with its tag, id, classes, and size. **↑** and **↓** step to the parent or first child, **Enter** captures the outlined element.
 3. Click to capture. **Shift-click** for a transparent PNG with no background or padding. **Alt-click** (Option on Mac) to keep the element's whole box as it is instead of cutting a transparent container down to the visible pieces inside it. The two combine. Press **Esc** to cancel.
-4. The PNG lands in your Downloads folder as `element-YYYYMMDD-HHMMSS.png` and is copied to the clipboard.
+4. The PNG lands in your Downloads folder as `element-<site>-YYYYMMDD-HHMMSS.png` and is copied to the clipboard.
 
 ## Shapes
 
@@ -30,7 +30,9 @@ Chrome Web Store: coming soon. Until then, load it unpacked:
 
 - The extension only touches a page when you click its icon (`activeTab` + `scripting`); `downloads` saves the PNG and `clipboardWrite` copies it. No network access.
 - On pages Chrome will not capture (its own pages, the Web Store) the icon shows a red `!` with the reason in its tooltip. Local files need "Allow access to file URLs" enabled for the extension.
-- The capture is taken from the visible tab, so an element taller than the viewport is cropped to what is on screen. It scrolls the element into view first.
+- Elements bigger than the window are captured in tiles: the page is scrolled through the element, each visible part is grabbed, and the pieces are stitched. Chrome allows about two captures per second, so a very tall element takes a few seconds; a progress toast counts the tiles. Elements inside an inner scrolling container are captured as far as they are visible.
+- Fixed and sticky elements that would cover the target (navbars, cookie banners) are hidden during the capture and restored afterwards. Sticky parts inside a tall element are pinned into normal flow while it is stitched so they do not repeat.
+- The picker's overlay, hint, and toasts live in a shadow root and are removed from the page when idle, so page CSS cannot restyle them and nothing is left behind.
 - Chrome does not allow captures on `chrome://` pages or the Web Store.
 - Tweak `PADDING` and the `MESH_BASE` / `MESH_BLOBS` colours at the top of `background.js` to change the look. The blob layout is randomised per shot.
 

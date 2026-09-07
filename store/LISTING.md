@@ -26,7 +26,9 @@ What makes it nice:
 • Shift-click for a transparent PNG with no background, ready for slides and docs.
 • Alt-click to keep an element's whole box exactly as it is on the page.
 • Every shot is saved to Downloads and copied to the clipboard, so you can paste it right away.
-• Press Esc to cancel at any time.
+• Tall or wide elements are scrolled through and stitched into one image.
+• Sticky headers and cookie banners covering the element are hidden for the shot.
+• Keyboard: Alt+Shift+S to start, arrow keys to step to the parent or child, Enter to capture, Esc to cancel.
 • Retina-aware: the PNG is saved at your display's native resolution.
 
 Private by design:
@@ -67,7 +69,7 @@ Made by Peter Theill. Questions or ideas: peter@theill.com
 
 ## Publishing checklist
 
-1. Bump `version` in `manifest.json` if needed (currently 1.4.0).
+1. Bump `version` in `manifest.json` if needed (currently 1.5.0).
 2. Run `./pack.sh`. It writes `dist/element-shot-<version>.zip` containing only the runtime files.
 3. Developer Dashboard (https://chrome.google.com/webstore/devconsole): one-time $5 registration fee if not already registered.
 4. New item → upload the zip → fill in the tabs above → Submit for review. First reviews usually take a few days.
