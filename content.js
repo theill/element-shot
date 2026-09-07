@@ -32,7 +32,7 @@
       background: "rgba(17,17,17,0.9)", borderRadius: "999px", pointerEvents: "none",
       boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
     });
-    hint.textContent = "Click to capture \u00b7 Shift-click for a transparent PNG \u00b7 Esc to cancel";
+    hint.textContent = "Click to capture \u00b7 Shift: transparent PNG \u00b7 Alt: keep the whole box \u00b7 Esc to cancel";
     document.documentElement.append(overlay, label, hint);
   }
 
@@ -79,9 +79,9 @@
     e.stopImmediatePropagation();
     const target = hovered || document.elementFromPoint(e.clientX, e.clientY);
     if (!target) return;
-    const transparent = e.shiftKey;
+    const options = { transparent: e.shiftKey, whole: e.altKey };
     stop();
-    capture(target, transparent).catch((err) => toast("Screenshot failed: " + (err?.message || err), true));
+    capture(target, options).catch((err) => toast("Screenshot failed: " + (err?.message || err), true));
   }
 
   const swallow = (e) => { e.preventDefault(); e.stopPropagation(); };
@@ -120,7 +120,10 @@
       setTimeout(finish, 150);
     });
 
-  async function capture(target, transparent) {
+  // transparent: output PNG with alpha instead of the mesh background.
+  // whole: keep the element's full box (its own background, whatever it is) instead of cutting a
+  // transparent container down to the visible pieces inside it.
+  async function capture(target, { transparent, whole }) {
     // Bring the element into view, then let the page repaint without our overlay before grabbing pixels.
     target.scrollIntoView({ block: "nearest", inline: "nearest" });
     await nextFrame();
@@ -138,7 +141,7 @@
 
     // Shapes to keep: the element itself if it paints a background or border, otherwise the visible
     // boxes inside it (cards, images, text lines) so the background shows through the gaps.
-    const boxes = collectBoxes(target, rect);
+    const boxes = collectBoxes(target, rect, whole);
 
     const res = await chrome.runtime.sendMessage({
       type: "element-shot:shoot", rect, boxes, transparent, viewport: { width: vw, height: vh },
@@ -146,7 +149,7 @@
     if (!res?.ok) throw new Error(res?.error || "capture failed");
 
     const copied = await copyPng(res.png);
-    const what = `${Math.round(rect.width)}\u00d7${Math.round(rect.height)}${transparent ? " transparent" : ""} PNG`;
+    const what = `${Math.round(rect.width)}\u00d7${Math.round(rect.height)}${transparent ? " transparent" : ""}${whole ? " whole-box" : ""} PNG`;
     toast(copied ? `Saved and copied ${what}` : `Saved ${what} (clipboard unavailable)`);
   }
 
@@ -171,7 +174,7 @@
 
   // Returns boxes relative to the crop rect: {x, y, w, h, radii, solid}. Solid boxes get a drop shadow;
   // text boxes only contribute to the clip.
-  function collectBoxes(root, crop) {
+  function collectBoxes(root, crop, whole) {
     const boxes = [];
     let count = 0;
 
@@ -213,7 +216,7 @@
     };
 
     const rootStyle = getComputedStyle(root);
-    if (!isSolid(root, rootStyle)) {
+    if (!whole && !isSolid(root, rootStyle)) {
       try { walk(root); } catch { boxes.length = 0; }
     }
     if (!boxes.length) pushElement(root, rootStyle, true);

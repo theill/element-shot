@@ -17,13 +17,13 @@ Chrome Web Store: coming soon. Until then, load it unpacked:
 
 1. Click the Element Shot icon on any http(s) page.
 2. Move the mouse; the element under the cursor is outlined with its tag, id, classes, and size.
-3. Click to capture, or **Shift-click** for a transparent PNG with no background or padding. Press **Esc** to cancel.
+3. Click to capture. **Shift-click** for a transparent PNG with no background or padding. **Alt-click** (Option on Mac) to keep the element's whole box as it is instead of cutting a transparent container down to the visible pieces inside it. The two combine. Press **Esc** to cancel.
 4. The PNG lands in your Downloads folder as `element-YYYYMMDD-HHMMSS.png` and is copied to the clipboard.
 
 ## Shapes
 
 - If the element paints its own background or border, the crop follows its corner radius, so rounded cards get transparent corners.
-- If the element is a transparent container (a flex row of cards, a grid), the crop is clipped to the visible boxes inside it: backgrounds, borders, images, form controls, and text lines. The background shows through the gaps and every solid box gets its own drop shadow.
+- If the element is a transparent container (a flex row of cards, a grid), the crop is clipped to the visible boxes inside it: backgrounds, borders, images, form controls, and text lines. The background shows through the gaps and every solid box gets its own drop shadow. Alt-click to skip this and keep the whole box, page background included.
 - Text sitting directly in a transparent container keeps a strip of the page background behind each line, since the tab capture has no alpha channel to key it out.
 
 ## Notes

@@ -24,6 +24,7 @@ What makes it nice:
 • A transparent container, like a row of cards, is cut into its visible parts. Each card gets its own shadow and the gaps show the background.
 • The overlay shows the tag, id, classes, and size of the element under the cursor.
 • Shift-click for a transparent PNG with no background, ready for slides and docs.
+• Alt-click to keep an element's whole box exactly as it is on the page.
 • Every shot is saved to Downloads and copied to the clipboard, so you can paste it right away.
 • Press Esc to cancel at any time.
 • Retina-aware: the PNG is saved at your display's native resolution.
