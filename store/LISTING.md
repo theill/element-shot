@@ -34,7 +34,8 @@ What makes it nice:
 Private by design:
 • Runs only when you click the icon (activeTab), never in the background.
 • Makes no network requests. Nothing is uploaded, collected, or tracked.
-• No accounts, no settings to configure, completely free, MIT licensed.
+• Settings for background style (four palettes, a solid colour, or transparent), padding, and PNG or WebP.
+• No accounts, completely free, MIT licensed.
 
 Made by Peter Theill. Questions or ideas: peter@theill.com
 
@@ -57,6 +58,7 @@ Made by Peter Theill. Questions or ideas: peter@theill.com
   - `scripting`: Injects the element picker (content.js) into the current tab when the icon is clicked. There are no static content scripts.
   - `downloads`: Saves the finished PNG to the user's Downloads folder.
   - `clipboardWrite`: Copies the same PNG to the clipboard after a capture so it can be pasted immediately.
+  - `storage`: Stores the user's settings (background style, padding, file format) in chrome.storage.sync.
 - **Host permissions:** none.
 - **Remote code:** No, the extension does not use remote code.
 - **Data usage:** check none of the data types. Certify all three disclosures (no sale, no unrelated use, no creditworthiness use).
@@ -69,7 +71,7 @@ Made by Peter Theill. Questions or ideas: peter@theill.com
 
 ## Publishing checklist
 
-1. Bump `version` in `manifest.json` if needed (currently 1.5.0).
+1. Bump `version` in `manifest.json` if needed (currently 1.6.0).
 2. Run `./pack.sh`. It writes `dist/element-shot-<version>.zip` containing only the runtime files.
 3. Developer Dashboard (https://chrome.google.com/webstore/devconsole): one-time $5 registration fee if not already registered.
 4. New item → upload the zip → fill in the tabs above → Submit for review. First reviews usually take a few days.

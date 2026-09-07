@@ -1,14 +1,23 @@
 // Element Shot background worker: starts the picker, captures tiles, stitches and composes, downloads.
 
-const PADDING = 72;
-// Background: cream base with large soft colour blobs and a light film grain.
-const MESH_BASE = "#f3ece2";
-const MESH_BLOBS = ["#f7c9a8", "#f2b7c6", "#c9c6ec", "#b9dcef", "#f6e3a1"];
 const DEFAULT_TITLE = "Element Shot: pick an element to screenshot";
+
+// User settings (options.html). Chrome fills in these defaults for anything not stored yet.
+const DEFAULTS = { background: "pastel", color: "#e9e4dc", padding: 72, format: "png" };
+
+// Mesh backgrounds: a base colour with large soft colour blobs and a light film grain.
+const MESHES = {
+  pastel: { base: "#f3ece2", blobs: ["#f7c9a8", "#f2b7c6", "#c9c6ec", "#b9dcef", "#f6e3a1"], shadow: "rgba(0,0,0,0.38)" },
+  sunset: { base: "#fbe4d8", blobs: ["#ff9a76", "#ffb347", "#ff6b9d", "#ffd166", "#f4a261"], shadow: "rgba(60,20,0,0.4)" },
+  ocean:  { base: "#e3f0f5", blobs: ["#7fd3f0", "#5eead4", "#93c5fd", "#a7f3d0", "#67e8f9"], shadow: "rgba(0,30,50,0.38)" },
+  night:  { base: "#1b1b2f", blobs: ["#4c3f91", "#1f4068", "#5c2a9d", "#2b6777", "#7b3f61"], shadow: "rgba(0,0,0,0.65)" },
+};
+
+const getSettings = async () => ({ ...DEFAULTS, ...(await chrome.storage.sync.get(DEFAULTS)) });
 
 // Show the About page once, right after installation.
 chrome.runtime.onInstalled.addListener(({ reason }) => {
-  if (reason === "install") chrome.runtime.openOptionsPage();
+  if (reason === "install") chrome.tabs.create({ url: chrome.runtime.getURL("about.html") });
 });
 
 // Toolbar click or the keyboard shortcut (the _execute_action command lands here).
@@ -83,11 +92,15 @@ async function finish({ size, boxes, transparent }, sender) {
   if (!s?.tiles.length) throw new Error("nothing was captured");
   sessions.delete(sender.tab.id);
   try {
+    const settings = await getSettings();
     const shapes = boxes?.length ? boxes : [{ x: 0, y: 0, w: size.w, h: size.h, radii: [0, 0, 0, 0], solid: true }];
-    const png = await compose(s.tiles, s.dpr, size, shapes, { transparent: !!transparent });
-    const filename = `element-${siteName(sender.tab.url)}-${stamp()}.png`;
-    await chrome.downloads.download({ url: png, filename, saveAs: false });
-    // The content script also puts the PNG on the clipboard; it needs the bytes for that.
+    const canvas = await compose(s.tiles, s.dpr, size, shapes, { tight: !!transparent, settings });
+    const webp = settings.format === "webp";
+    const file = await toDataUrl(await canvas.convertToBlob(webp ? { type: "image/webp", quality: 0.92 } : { type: "image/png" }));
+    // The clipboard only takes PNG, so the content script always gets one of those too.
+    const png = webp ? await toDataUrl(await canvas.convertToBlob({ type: "image/png" })) : file;
+    const filename = `element-${siteName(sender.tab.url)}-${stamp()}.${webp ? "webp" : "png"}`;
+    await chrome.downloads.download({ url: file, filename, saveAs: false });
     return { filename, png };
   } finally {
     for (const t of s.tiles) t.bitmap.close();
@@ -114,18 +127,26 @@ async function captureTab(windowId) {
 
 // ---------- compositing ----------
 
-// transparent: no padding, no background, no shadow; just the element's shape on alpha.
-async function compose(tiles, dpr, size, boxes, { transparent }) {
-  const pad = transparent ? 0 : PADDING;
+// tight (Shift-click): no padding, no background, no shadow; just the element's shape on alpha.
+// Otherwise the configured background, padding and a drop shadow under every solid box.
+async function compose(tiles, dpr, size, boxes, { tight, settings }) {
+  const pad = tight ? 0 : Math.max(0, Math.min(400, Number(settings.padding) || 0));
   const w = size.w, h = size.h;
   const W = w + pad * 2, H = h + pad * 2;
   const canvas = new OffscreenCanvas(Math.round(W * dpr), Math.round(H * dpr));
   const ctx = canvas.getContext("2d");
   ctx.scale(dpr, dpr);
 
-  if (!transparent) {
-    drawMesh(ctx, W, H);
-    drawGrain(ctx, canvas.width, canvas.height);
+  const mesh = MESHES[settings.background];
+  if (!tight) {
+    if (mesh) {
+      drawMesh(ctx, W, H, mesh);
+      drawGrain(ctx, canvas.width, canvas.height);
+    } else if (settings.background === "solid") {
+      ctx.fillStyle = settings.color || DEFAULTS.color;
+      ctx.fillRect(0, 0, W, H);
+    }
+    // "transparent": nothing painted; padding and shadow still apply.
   }
 
   // The crop is clipped to the visible boxes the picker found (the element itself, or the cards,
@@ -136,9 +157,9 @@ async function compose(tiles, dpr, size, boxes, { transparent }) {
     for (const b of boxes) if (!filter || filter(b)) ctx.roundRect(pad + b.x, pad + b.y, b.w, b.h, b.radii);
   };
 
-  if (!transparent) {
+  if (!tight) {
     ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,0.38)";
+    ctx.shadowColor = mesh?.shadow || "rgba(0,0,0,0.38)";
     ctx.shadowBlur = 44;
     ctx.shadowOffsetY = 20;
     ctx.fillStyle = "#fff";
@@ -153,18 +174,17 @@ async function compose(tiles, dpr, size, boxes, { transparent }) {
   for (const t of tiles) ctx.drawImage(t.bitmap, pad + t.dx, pad + t.dy, t.w, t.h);
   ctx.restore();
 
-  const blob = await canvas.convertToBlob({ type: "image/png" });
-  return `data:image/png;base64,${toBase64(await blob.arrayBuffer())}`;
+  return canvas;
 }
 
-function drawMesh(ctx, W, H) {
+function drawMesh(ctx, W, H, { base, blobs }) {
   const rnd = mulberry32(Date.now() & 0xffff);
   const S = 48;
   const small = new OffscreenCanvas(S, Math.max(8, Math.round((S * H) / W)));
   const sc = small.getContext("2d");
-  sc.fillStyle = MESH_BASE;
+  sc.fillStyle = base;
   sc.fillRect(0, 0, small.width, small.height);
-  for (const color of MESH_BLOBS.slice().sort(() => rnd() - 0.5)) {
+  for (const color of blobs.slice().sort(() => rnd() - 0.5)) {
     const x = rnd() * small.width, y = rnd() * small.height;
     const r = (0.45 + rnd() * 0.4) * Math.max(small.width, small.height);
     const g = sc.createRadialGradient(x, y, 0, x, y, r);
@@ -207,6 +227,10 @@ function mulberry32(seed) {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+async function toDataUrl(blob) {
+  return `data:${blob.type};base64,${toBase64(await blob.arrayBuffer())}`;
 }
 
 function toBase64(buffer) {

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Element Shot settings</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    font: 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; color: #1f1f1f; background: #f3ece2;
+    background-image:
+      radial-gradient(60% 60% at 15% 20%, #f7c9a8cc, transparent 70%),
+      radial-gradient(50% 50% at 85% 15%, #c9c6ecbb, transparent 70%),
+      radial-gradient(55% 55% at 80% 85%, #b9dcefbb, transparent 70%),
+      radial-gradient(45% 45% at 20% 90%, #f6e3a1cc, transparent 70%);
+  }
+  main { width: min(560px, calc(100% - 40px)); padding: 36px 40px; background: #fff; border-radius: 16px; box-shadow: 0 24px 60px -20px rgba(40,30,20,.35); }
+  header { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
+  header img { width: 44px; height: 44px; border-radius: 11px; }
+  h1 { font-size: 20px; margin: 0; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #888; margin: 26px 0 10px; }
+  .styles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .style { position: relative; cursor: pointer; }
+  .style input { position: absolute; opacity: 0; inset: 0; }
+  .swatch { height: 64px; border-radius: 10px; border: 2px solid #e5e5e5; display: grid; place-items: center; transition: border-color .12s, transform .12s; }
+  .swatch::after { content: ""; width: 44%; height: 40%; background: #fff; border-radius: 4px; box-shadow: 0 6px 14px rgba(0,0,0,.25); }
+  .style input:checked + .swatch { border-color: #6366f1; transform: translateY(-1px); }
+  .style input:focus-visible + .swatch { outline: 2px solid #6366f1; outline-offset: 2px; }
+  .name { display: block; text-align: center; font-size: 12px; margin-top: 4px; color: #555; }
+  .pastel { background: #f3ece2 radial-gradient(60% 60% at 20% 20%, #f7c9a8, transparent 70%); background-image: radial-gradient(60% 60% at 20% 20%, #f7c9a8, transparent 70%), radial-gradient(60% 60% at 80% 30%, #c9c6ec, transparent 70%), radial-gradient(60% 60% at 70% 90%, #b9dcef, transparent 70%), radial-gradient(60% 60% at 20% 90%, #f6e3a1, transparent 70%); }
+  .sunset { background-color: #fbe4d8; background-image: radial-gradient(60% 60% at 20% 20%, #ff9a76, transparent 70%), radial-gradient(60% 60% at 80% 30%, #ffb347, transparent 70%), radial-gradient(60% 60% at 70% 90%, #ff6b9d, transparent 70%), radial-gradient(60% 60% at 20% 90%, #ffd166, transparent 70%); }
+  .ocean { background-color: #e3f0f5; background-image: radial-gradient(60% 60% at 20% 20%, #7fd3f0, transparent 70%), radial-gradient(60% 60% at 80% 30%, #5eead4, transparent 70%), radial-gradient(60% 60% at 70% 90%, #93c5fd, transparent 70%), radial-gradient(60% 60% at 20% 90%, #a7f3d0, transparent 70%); }
+  .night { background-color: #1b1b2f; background-image: radial-gradient(60% 60% at 20% 20%, #4c3f91, transparent 70%), radial-gradient(60% 60% at 80% 30%, #1f4068, transparent 70%), radial-gradient(60% 60% at 70% 90%, #5c2a9d, transparent 70%), radial-gradient(60% 60% at 20% 90%, #7b3f61, transparent 70%); }
+  .solid { background: var(--solid, #e9e4dc); }
+  .transparent { background: repeating-conic-gradient(#ddd 0 25%, #fff 0 50%) 0 0 / 16px 16px; }
+  .row { display: flex; align-items: center; gap: 14px; margin-top: 10px; }
+  .row label { min-width: 120px; }
+  input[type=range] { flex: 1; }
+  .value { min-width: 56px; text-align: right; font-variant-numeric: tabular-nums; color: #555; }
+  input[type=color] { width: 44px; height: 30px; border: 1px solid #ccc; border-radius: 6px; padding: 2px; background: #fff; }
+  .seg { display: inline-flex; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; }
+  .seg label { position: relative; padding: 6px 16px; cursor: pointer; }
+  .seg input { position: absolute; opacity: 0; inset: 0; }
+  .seg input:checked + span { color: #fff; }
+  .seg label:has(input:checked) { background: #222; }
+  .help { color: #666; font-size: 12px; margin: 6px 0 0; }
+  #status { color: #16a34a; font-size: 12px; margin-left: 10px; opacity: 0; transition: opacity .2s; }
+  #status.show { opacity: 1; }
+  footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #eee; font-size: 13px; color: #666; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  a { color: #4f46e5; }
+  @media (prefers-color-scheme: dark) {
+    body { color: #ececec; background: #1c1a18; background-image:
+      radial-gradient(60% 60% at 15% 20%, #7a4b3055, transparent 70%), radial-gradient(50% 50% at 85% 15%, #4a4670aa, transparent 70%),
+      radial-gradient(55% 55% at 80% 85%, #2f4a5aaa, transparent 70%), radial-gradient(45% 45% at 20% 90%, #6a5a2a66, transparent 70%); }
+    main { background: #26231f; box-shadow: 0 24px 60px -20px rgba(0,0,0,.6); }
+    h2, .name, .value, .help, footer { color: #9a948c; }
+    .swatch { border-color: #3a3630; }
+    footer { border-color: #3a3630; }
+    .seg { border-color: #4a463f; }
+    .seg label:has(input:checked) { background: #ececec; }
+    .seg input:checked + span { color: #1c1a18; }
+    input[type=color] { background: #1c1a18; border-color: #4a463f; }
+    a { color: #a5b4fc; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="icons/icon128.png" alt="">
+    <h1>Element Shot settings</h1>
+  </header>
+  <p class="help">Changes are saved as you make them and follow you to other Chromes signed in with the same account.</p>
+
+  <h2>Background</h2>
+  <div class="styles" id="styles">
+    <label class="style"><input type="radio" name="background" value="pastel"><span class="swatch pastel"></span><span class="name">Pastel</span></label>
+    <label class="style"><input type="radio" name="background" value="sunset"><span class="swatch sunset"></span><span class="name">Sunset</span></label>
+    <label class="style"><input type="radio" name="background" value="ocean"><span class="swatch ocean"></span><span class="name">Ocean</span></label>
+    <label class="style"><input type="radio" name="background" value="night"><span class="swatch night"></span><span class="name">Night</span></label>
+    <label class="style"><input type="radio" name="background" value="solid"><span class="swatch solid" id="solidSwatch"></span><span class="name">Solid colour</span></label>
+    <label class="style"><input type="radio" name="background" value="transparent"><span class="swatch transparent"></span><span class="name">Transparent</span></label>
+  </div>
+  <div class="row" id="colorRow">
+    <label for="color">Solid colour</label>
+    <input type="color" id="color">
+    <span class="value" id="colorValue"></span>
+  </div>
+  <p class="help">Shift-click while picking always gives a tight transparent cut with no padding or shadow, whatever is chosen here.</p>
+
+  <h2>Padding</h2>
+  <div class="row">
+    <label for="padding">Around the element</label>
+    <input type="range" id="padding" min="0" max="200" step="4">
+    <span class="value"><span id="paddingValue"></span> px</span>
+  </div>
+
+  <h2>File format</h2>
+  <div class="seg">
+    <label><input type="radio" name="format" value="png"><span>PNG</span></label>
+    <label><input type="radio" name="format" value="webp"><span>WebP</span></label>
+  </div>
+  <span id="status">Saved</span>
+  <p class="help">WebP files are much smaller. The clipboard copy is always PNG, since that is what apps accept when pasting.</p>
+
+  <footer>
+    <span>Made by <a href="https://theill.com" target="_blank" rel="noopener">Peter Theill</a> · free, MIT licensed</span>
+    <a href="about.html">About Element Shot</a>
+  </footer>
+</main>
+<script src="options.js"></script>
+</body>
+</html>

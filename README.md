@@ -18,7 +18,17 @@ Chrome Web Store: coming soon. Until then, load it unpacked:
 1. Click the Element Shot icon on any http(s) page, or press **Alt+Shift+S** (configurable at `chrome://extensions/shortcuts`).
 2. Move the mouse; the element under the cursor is outlined with its tag, id, classes, and size. **↑** and **↓** step to the parent or first child, **Enter** captures the outlined element.
 3. Click to capture. **Shift-click** for a transparent PNG with no background or padding. **Alt-click** (Option on Mac) to keep the element's whole box as it is instead of cutting a transparent container down to the visible pieces inside it. The two combine. Press **Esc** to cancel.
-4. The PNG lands in your Downloads folder as `element-<site>-YYYYMMDD-HHMMSS.png` and is copied to the clipboard.
+4. The image lands in your Downloads folder as `element-<site>-YYYYMMDD-HHMMSS.png` (or `.webp`) and a PNG copy goes to the clipboard.
+
+## Settings
+
+Right-click the icon and choose Options (or open the settings link on the About page):
+
+- **Background**: Pastel (default), Sunset, Ocean, Night, a solid colour of your choice, or transparent. All keep the padding and shadow; Shift-click while picking is the tight transparent cut without either.
+- **Padding** around the element, 0 to 200 px (default 72).
+- **File format**: PNG or WebP. The clipboard copy is always PNG because that is what apps accept on paste.
+
+Settings sync through Chrome when you are signed in.
 
 ## Shapes
 
@@ -28,13 +38,13 @@ Chrome Web Store: coming soon. Until then, load it unpacked:
 
 ## Notes
 
-- The extension only touches a page when you click its icon (`activeTab` + `scripting`); `downloads` saves the PNG and `clipboardWrite` copies it. No network access.
+- The extension only touches a page when you click its icon (`activeTab` + `scripting`); `downloads` saves the file, `clipboardWrite` copies it, and `storage` keeps your settings. No network access.
 - On pages Chrome will not capture (its own pages, the Web Store) the icon shows a red `!` with the reason in its tooltip. Local files need "Allow access to file URLs" enabled for the extension.
 - Elements bigger than the window are captured in tiles: the page is scrolled through the element, each visible part is grabbed, and the pieces are stitched. Chrome allows about two captures per second, so a very tall element takes a few seconds; a progress toast counts the tiles. Elements inside an inner scrolling container are captured as far as they are visible.
 - Fixed and sticky elements that would cover the target (navbars, cookie banners) are hidden during the capture and restored afterwards. Sticky parts inside a tall element are pinned into normal flow while it is stitched so they do not repeat.
 - The picker's overlay, hint, and toasts live in a shadow root and are removed from the page when idle, so page CSS cannot restyle them and nothing is left behind.
 - Chrome does not allow captures on `chrome://` pages or the Web Store.
-- Tweak `PADDING` and the `MESH_BASE` / `MESH_BLOBS` colours at the top of `background.js` to change the look. The blob layout is randomised per shot.
+- The mesh palettes are the `MESHES` table at the top of `background.js`; the blob layout is randomised per shot.
 
 ## Release
 

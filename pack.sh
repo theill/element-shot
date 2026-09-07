@@ -6,6 +6,6 @@ version=$(python3 -c "import json;print(json.load(open('manifest.json'))['versio
 mkdir -p dist
 out="dist/element-shot-$version.zip"
 rm -f "$out"
-zip -X -r "$out" manifest.json background.js content.js about.html about.js icons/ -x '*.DS_Store'
+zip -X -r "$out" manifest.json background.js content.js about.html about.js options.html options.js icons/ -x '*.DS_Store'
 echo "wrote $out"
 unzip -l "$out"
