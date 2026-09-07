@@ -43,11 +43,7 @@ Made by Peter Theill. Questions or ideas: peter@theill.com
 
 - Icon 128×128: `icons/icon128.png` (already in the package).
 - Small promo tile 440×280: `store/promo-440x280.png` (generated).
-- Screenshots, 1280×800 or 640×400, at least one, up to five. TODO: take real ones. Good candidates:
-  1. The picker overlay on a live page with a card outlined and labeled.
-  2. The resulting PNG of a rounded card on the mesh background.
-  3. A row of three cards captured from a transparent container.
-  4. A chart or table element.
+- Screenshots, 1280×800: six ready in `docs/screenshots/` (the store takes up to five; drop the settings one if you want exactly five). See `docs/README.md` for what each shows.
 - Marquee 1400×560: optional, skip.
 
 ## Privacy practices tab

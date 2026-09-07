@@ -2,6 +2,10 @@
 
 A tiny Chrome extension: click the toolbar icon, hover over the page, click an element, and a PNG of just that element, on a soft pastel mesh background with a drop shadow, is downloaded.
 
+![A stat card captured on the pastel background](docs/screenshots/02-polished-result.png)
+
+![A row of three cards captured as separate cards](docs/screenshots/03-groups-as-cards.png)
+
 ## Install
 
 Chrome Web Store: coming soon. Until then, load it unpacked:
