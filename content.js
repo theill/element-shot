@@ -32,7 +32,7 @@
       background: "rgba(17,17,17,0.9)", borderRadius: "999px", pointerEvents: "none",
       boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
     });
-    hint.textContent = "Click an element to screenshot it \u00b7 Esc to cancel";
+    hint.textContent = "Click to capture \u00b7 Shift-click for a transparent PNG \u00b7 Esc to cancel";
     document.documentElement.append(overlay, label, hint);
   }
 
@@ -79,8 +79,9 @@
     e.stopImmediatePropagation();
     const target = hovered || document.elementFromPoint(e.clientX, e.clientY);
     if (!target) return;
+    const transparent = e.shiftKey;
     stop();
-    capture(target).catch((err) => toast("Screenshot failed: " + (err?.message || err), true));
+    capture(target, transparent).catch((err) => toast("Screenshot failed: " + (err?.message || err), true));
   }
 
   const swallow = (e) => { e.preventDefault(); e.stopPropagation(); };
@@ -119,7 +120,7 @@
       setTimeout(finish, 150);
     });
 
-  async function capture(target) {
+  async function capture(target, transparent) {
     // Bring the element into view, then let the page repaint without our overlay before grabbing pixels.
     target.scrollIntoView({ block: "nearest", inline: "nearest" });
     await nextFrame();
@@ -140,10 +141,28 @@
     const boxes = collectBoxes(target, rect);
 
     const res = await chrome.runtime.sendMessage({
-      type: "element-shot:shoot", rect, boxes, viewport: { width: vw, height: vh },
+      type: "element-shot:shoot", rect, boxes, transparent, viewport: { width: vw, height: vh },
     });
     if (!res?.ok) throw new Error(res?.error || "capture failed");
-    toast(`Saved ${Math.round(rect.width)}\u00d7${Math.round(rect.height)} element screenshot`);
+
+    const copied = await copyPng(res.png);
+    const what = `${Math.round(rect.width)}\u00d7${Math.round(rect.height)}${transparent ? " transparent" : ""} PNG`;
+    toast(copied ? `Saved and copied ${what}` : `Saved ${what} (clipboard unavailable)`);
+  }
+
+  // Put the PNG on the clipboard as well. Fails quietly when the page has lost focus.
+  async function copyPng(dataUrl) {
+    try {
+      const bin = atob(dataUrl.split(",")[1]);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const blob = new Blob([bytes], { type: "image/png" });
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      return true;
+    } catch (err) {
+      console.warn("Element Shot: clipboard write failed", err);
+      return false;
+    }
   }
 
   const MAX_NODES = 4000;

@@ -23,6 +23,8 @@ What makes it nice:
 • Rounded elements keep their corners. The background shows through instead of a white slab.
 • A transparent container, like a row of cards, is cut into its visible parts. Each card gets its own shadow and the gaps show the background.
 • The overlay shows the tag, id, classes, and size of the element under the cursor.
+• Shift-click for a transparent PNG with no background, ready for slides and docs.
+• Every shot is saved to Downloads and copied to the clipboard, so you can paste it right away.
 • Press Esc to cancel at any time.
 • Retina-aware: the PNG is saved at your display's native resolution.
 
@@ -51,6 +53,7 @@ Made by Peter Theill. Questions or ideas: peter@theill.com
   - `activeTab`: Grants access to the current tab only after the user clicks the extension icon, so the element picker can run and the visible tab can be captured.
   - `scripting`: Injects the element picker (content.js) into the current tab when the icon is clicked. There are no static content scripts.
   - `downloads`: Saves the finished PNG to the user's Downloads folder.
+  - `clipboardWrite`: Copies the same PNG to the clipboard after a capture so it can be pasted immediately.
 - **Host permissions:** none.
 - **Remote code:** No, the extension does not use remote code.
 - **Data usage:** check none of the data types. Certify all three disclosures (no sale, no unrelated use, no creditworthiness use).
@@ -63,7 +66,7 @@ Made by Peter Theill. Questions or ideas: peter@theill.com
 
 ## Publishing checklist
 
-1. Bump `version` in `manifest.json` if needed (currently 1.3.0).
+1. Bump `version` in `manifest.json` if needed (currently 1.4.0).
 2. Run `./pack.sh`. It writes `dist/element-shot-<version>.zip` containing only the runtime files.
 3. Developer Dashboard (https://chrome.google.com/webstore/devconsole): one-time $5 registration fee if not already registered.
 4. New item → upload the zip → fill in the tabs above → Submit for review. First reviews usually take a few days.

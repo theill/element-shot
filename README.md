@@ -17,8 +17,8 @@ Chrome Web Store: coming soon. Until then, load it unpacked:
 
 1. Click the Element Shot icon on any http(s) page.
 2. Move the mouse; the element under the cursor is outlined with its tag, id, classes, and size.
-3. Click to capture. Press **Esc** to cancel.
-4. The PNG lands in your Downloads folder as `element-YYYYMMDD-HHMMSS.png`.
+3. Click to capture, or **Shift-click** for a transparent PNG with no background or padding. Press **Esc** to cancel.
+4. The PNG lands in your Downloads folder as `element-YYYYMMDD-HHMMSS.png` and is copied to the clipboard.
 
 ## Shapes
 
@@ -28,7 +28,8 @@ Chrome Web Store: coming soon. Until then, load it unpacked:
 
 ## Notes
 
-- The extension only touches a page when you click its icon (`activeTab` + `scripting`); `downloads` saves the PNG. No network access.
+- The extension only touches a page when you click its icon (`activeTab` + `scripting`); `downloads` saves the PNG and `clipboardWrite` copies it. No network access.
+- On pages Chrome will not capture (its own pages, the Web Store) the icon shows a red `!` with the reason in its tooltip. Local files need "Allow access to file URLs" enabled for the extension.
 - The capture is taken from the visible tab, so an element taller than the viewport is cropped to what is on screen. It scrolls the element into view first.
 - Chrome does not allow captures on `chrome://` pages or the Web Store.
 - Tweak `PADDING` and the `MESH_BASE` / `MESH_BLOBS` colours at the top of `background.js` to change the look. The blob layout is randomised per shot.

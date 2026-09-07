@@ -3,11 +3,11 @@
   "name": "Element Shot",
   "short_name": "Element Shot",
   "description": "Pick any element on a page and save a clean screenshot of just that element on a soft background.",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "author": "Peter Theill",
   "homepage_url": "https://theill.com",
   "minimum_chrome_version": "110",
-  "permissions": ["activeTab", "scripting", "downloads"],
+  "permissions": ["activeTab", "scripting", "downloads", "clipboardWrite"],
   "action": {
     "default_title": "Element Shot: pick an element to screenshot"
   },

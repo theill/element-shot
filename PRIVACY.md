@@ -14,6 +14,7 @@ Element Shot is a Chrome extension that saves a screenshot of a single element o
 
 - `activeTab` and `scripting`: to run the element picker on the current tab, and only after you click the extension icon.
 - `downloads`: to save the finished PNG to your Downloads folder.
+- `clipboardWrite`: to place the same PNG on your clipboard so you can paste it straight away.
 
 The extension has no host permissions and cannot read pages you have not clicked its icon on.
 

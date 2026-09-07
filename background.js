@@ -10,15 +10,37 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") chrome.runtime.openOptionsPage();
 });
 
+const DEFAULT_TITLE = "Element Shot: pick an element to screenshot";
+
 chrome.action.onClicked.addListener(async (tab) => {
-  if (!tab.id || !/^https?:|^file:/.test(tab.url || "")) return;
+  if (!tab.id) return;
+  const url = tab.url || "";
+  if (!/^(https?|file):/.test(url) || /^https:\/\/chromewebstore\.google\.com\//.test(url)) {
+    return flash(tab.id, "Chrome does not allow screenshots on this page");
+  }
   try {
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["content.js"] });
     await chrome.tabs.sendMessage(tab.id, { type: "element-shot:start" });
   } catch (err) {
-    console.error("Element Shot: could not start picker", err);
+    console.warn("Element Shot: could not start picker", err);
+    flash(tab.id, url.startsWith("file:")
+      ? "Turn on \"Allow access to file URLs\" for Element Shot at chrome://extensions"
+      : "Element Shot cannot run on this page");
   }
 });
+
+// Show a red "!" on the icon with the reason as its tooltip, then clear it.
+async function flash(tabId, message) {
+  try {
+    await chrome.action.setBadgeBackgroundColor({ tabId, color: "#dc2626" });
+    await chrome.action.setBadgeText({ tabId, text: "!" });
+    await chrome.action.setTitle({ tabId, title: `Element Shot: ${message}` });
+    setTimeout(() => {
+      chrome.action.setBadgeText({ tabId, text: "" }).catch(() => {});
+      chrome.action.setTitle({ tabId, title: DEFAULT_TITLE }).catch(() => {});
+    }, 8000);
+  } catch {}
+}
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg?.type !== "element-shot:shoot") return;
@@ -28,50 +50,58 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   return true; // async response
 });
 
-async function shoot({ rect, boxes, viewport }, sender) {
+async function shoot({ rect, boxes, viewport, transparent }, sender) {
   const dataUrl = await chrome.tabs.captureVisibleTab(sender.tab.windowId, { format: "png" });
   const capture = await createImageBitmap(await (await fetch(dataUrl)).blob());
   const dpr = capture.width / viewport.width; // actual capture scale relative to CSS pixels
 
-  const png = await compose(capture, rect, boxes?.length ? boxes : [{ x: 0, y: 0, w: rect.width, h: rect.height, radii: [0, 0, 0, 0], solid: true }], dpr);
+  const shapes = boxes?.length ? boxes : [{ x: 0, y: 0, w: rect.width, h: rect.height, radii: [0, 0, 0, 0], solid: true }];
+  const png = await compose(capture, rect, shapes, dpr, { transparent: !!transparent });
   const filename = `element-${stamp()}.png`;
   await chrome.downloads.download({ url: png, filename, saveAs: false });
-  return { filename };
+  // The content script also puts the PNG on the clipboard; it needs the bytes for that.
+  return { filename, png };
 }
 
 // ---------- compositing ----------
 
-async function compose(capture, rect, boxes, dpr) {
+// transparent: no padding, no background, no shadow; just the element's shape on alpha.
+async function compose(capture, rect, boxes, dpr, { transparent }) {
+  const pad = transparent ? 0 : PADDING;
   const w = rect.width, h = rect.height;
-  const W = w + PADDING * 2, H = h + PADDING * 2;
+  const W = w + pad * 2, H = h + pad * 2;
   const canvas = new OffscreenCanvas(Math.round(W * dpr), Math.round(H * dpr));
   const ctx = canvas.getContext("2d");
   ctx.scale(dpr, dpr);
 
-  drawMesh(ctx, W, H);
-  drawGrain(ctx, canvas.width, canvas.height);
+  if (!transparent) {
+    drawMesh(ctx, W, H);
+    drawGrain(ctx, canvas.width, canvas.height);
+  }
 
   // The crop is clipped to the visible boxes the picker found (the element itself, or the cards,
   // images and text inside a transparent container), so the background shows through everywhere else.
   // Only solid boxes (backgrounds, borders, images) cast a shadow; text lines just shape the clip.
   const shape = (filter) => {
     ctx.beginPath();
-    for (const b of boxes) if (!filter || filter(b)) ctx.roundRect(PADDING + b.x, PADDING + b.y, b.w, b.h, b.radii);
+    for (const b of boxes) if (!filter || filter(b)) ctx.roundRect(pad + b.x, pad + b.y, b.w, b.h, b.radii);
   };
 
-  ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.38)";
-  ctx.shadowBlur = 44;
-  ctx.shadowOffsetY = 20;
-  ctx.fillStyle = "#fff";
-  shape((b) => b.solid);
-  ctx.fill();
-  ctx.restore();
+  if (!transparent) {
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.38)";
+    ctx.shadowBlur = 44;
+    ctx.shadowOffsetY = 20;
+    ctx.fillStyle = "#fff";
+    shape((b) => b.solid);
+    ctx.fill();
+    ctx.restore();
+  }
 
   ctx.save();
   shape();
   ctx.clip();
-  ctx.drawImage(capture, rect.x * dpr, rect.y * dpr, w * dpr, h * dpr, PADDING, PADDING, w, h);
+  ctx.drawImage(capture, rect.x * dpr, rect.y * dpr, w * dpr, h * dpr, pad, pad, w, h);
   ctx.restore();
 
   const blob = await canvas.convertToBlob({ type: "image/png" });
