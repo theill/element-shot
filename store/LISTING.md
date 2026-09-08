@@ -58,7 +58,7 @@ Made by Peter Theill. Questions or ideas: peter@theill.com
 - **Host permissions:** none.
 - **Remote code:** No, the extension does not use remote code.
 - **Data usage:** check none of the data types. Certify all three disclosures (no sale, no unrelated use, no creditworthiness use).
-- **Privacy policy URL:** TODO. Publish `PRIVACY.md` at a public URL (the About page links to https://theill.com/element-shot/privacy; either host it there or change the link in `about.html`). A GitHub-hosted copy also works.
+- **Privacy policy URL:** https://commanigy.com/element-shot-extension/privacy. TODO: publish `PRIVACY.md` there (the About page links to it, and the store rejects a dead link). The extension's home page is https://commanigy.com/element-shot-extension (`homepage_url` in the manifest).
 
 ## Distribution
 

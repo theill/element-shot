@@ -21,4 +21,4 @@ The extension has no host permissions and cannot read pages you have not clicked
 
 ## Contact
 
-Peter Theill, peter@theill.com, https://theill.com
+Peter Theill, peter@theill.com, https://commanigy.com/element-shot-extension

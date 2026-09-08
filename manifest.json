@@ -5,7 +5,7 @@
   "description": "Pick any element on a page and save a clean screenshot of just that element on a soft background.",
   "version": "1.6.1",
   "author": "Peter Theill",
-  "homepage_url": "https://theill.com",
+  "homepage_url": "https://commanigy.com/element-shot-extension",
   "minimum_chrome_version": "110",
   "permissions": [
     "activeTab",
