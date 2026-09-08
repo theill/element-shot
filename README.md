@@ -26,7 +26,7 @@ Chrome Web Store: coming soon. Until then, load it unpacked:
 
 ## Settings
 
-Right-click the icon and choose Options (or open the settings link on the About page):
+Right-click the icon and choose Options (or open the settings link on the About page). A live preview shows exactly how a shot will come out, with real file-size estimates for PNG and WebP:
 
 - **Background**: Pastel (default), Sunset, Ocean, Night, a solid colour of your choice, or transparent. All keep the padding and shadow; Shift-click while picking is the tight transparent cut without either.
 - **Padding** around the element, 0 to 200 px (default 72).
@@ -48,7 +48,7 @@ Settings sync through Chrome when you are signed in.
 - Fixed and sticky elements that would cover the target (navbars, cookie banners) are hidden during the capture and restored afterwards. Sticky parts inside a tall element are pinned into normal flow while it is stitched so they do not repeat.
 - The picker's overlay, hint, and toasts live in a shadow root and are removed from the page when idle, so page CSS cannot restyle them and nothing is left behind.
 - Chrome does not allow captures on `chrome://` pages or the Web Store.
-- The mesh palettes are the `MESHES` table at the top of `background.js`; the blob layout is randomised per shot.
+- The mesh palettes and the mesh painter live in `palettes.js`, shared by the worker and the settings page; the blob layout is randomised per shot.
 
 ## Release
 

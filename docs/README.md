@@ -14,7 +14,7 @@ Screenshots for the Chrome Web Store listing, the README, and social posts. All 
 Other assets:
 
 - `../store/promo-440x280.png` — small promo tile for the store (with a 2× master beside it).
-- `../icons/icon128.png` — the store icon.
+- `../icons/icon128.png` — the store icon. Source is `../icons/icon.svg`; `../icons/icon-small.svg` is a heavier-stroke version used for the 16 and 32 px toolbar sizes (`rsvg-convert -w N -h N -o iconN.png icon.svg`).
 
 ## Regenerating
 

@@ -67,7 +67,7 @@ Made by Peter Theill. Questions or ideas: peter@theill.com
 
 ## Publishing checklist
 
-1. Bump `version` in `manifest.json` if needed (currently 1.6.0).
+1. Bump `version` in `manifest.json` if needed (currently 1.6.1).
 2. Run `./pack.sh`. It writes `dist/element-shot-<version>.zip` containing only the runtime files.
 3. Developer Dashboard (https://chrome.google.com/webstore/devconsole): one-time $5 registration fee if not already registered.
 4. New item → upload the zip → fill in the tabs above → Submit for review. First reviews usually take a few days.
